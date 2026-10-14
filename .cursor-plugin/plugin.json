@@ -1,16 +1,36 @@
 {
   "name": "hermes-fleet-management",
   "displayName": "Hermes Fleet Management",
-  "version": "0.1.0",
-  "description": "Manage a fleet of Nous Research Hermes agents from Grok Bot: fail-loud fleet health, async ask over the Hermes native HTTP API (:8642) with run polling, and a file-mailbox fallback channel.",
-  "author": { "name": "@pixelrainbownft" },
+  "version": "2.0.0",
+  "description": "Manage any Nous Research Hermes Agent fleet from Grok Bot. Golden Rule: read the official Hermes docs before any action (built-in hermes_docs tool). Fail-loud health, version and skill drift, async ask via the native Runs API, inference status, dry-run-by-default gateway restart and canary updates, mailbox fallback, and a compound-learnings loop.",
+  "author": {
+    "name": "@pixelrainbownft"
+  },
   "homepage": "https://x.com/pixelrainbownft",
   "repository": "https://github.com/shagghiesuperstar/hermes-fleet-management",
   "license": "MIT",
   "logo": "assets/logo.svg",
-  "keywords": ["hermes", "hermes-agent", "nous-research", "fleet", "mcp", "agents", "health-check", "bridge"],
+  "keywords": [
+    "agents",
+    "bridge",
+    "docs-first",
+    "fleet",
+    "health-check",
+    "hermes",
+    "hermes-agent",
+    "inference",
+    "mcp",
+    "memory",
+    "nous-research",
+    "updates"
+  ],
   "category": "developer-tools",
-  "tags": ["agents", "fleet", "ops", "mcp"],
+  "tags": [
+    "agents",
+    "fleet",
+    "ops",
+    "mcp"
+  ],
   "skills": "./skills/",
   "mcpServers": "./mcp.json"
 }

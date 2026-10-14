@@ -1,0 +1,4 @@
+#!/bin/sh
+# fake ssh for tests: prints what would run, never connects anywhere
+for last; do :; done
+echo "FAKE-SSH would run: $last"

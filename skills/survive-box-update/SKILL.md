@@ -4,7 +4,9 @@ description: Use after a Grok Bot computer update or reset, or when every Hermes
 ---
 # Survive a box update (generic restore pattern)
 
-Grok Bot computer updates can wipe installed software and running processes outside the persistent home directory. If your Hermes hosts are reached over a mesh VPN, the VPN client disappears and **every** `:8642` call times out at once.
+**Step 0 (Golden Rule, [golden-rule-read-docs-first](../golden-rule-read-docs-first/SKILL.md)):** before any command, answer, or config change below, call `hermes_docs` for the topic (pages listed under *Docs*). If the docs don't cover it, say **"not in official docs"** and mark the step UNVERIFIED. Commands marked *(verified)* were checked against the official docs on 2026-10-14. Flags still change between releases, so re-check.
+
+Grok Bot computer updates can wipe installed software and running processes outside the persistent home directory. If your Hermes hosts are reached over a mesh VPN or overlay network, the VPN client disappears and **every** `:8642` call times out at once.
 
 ## Prepare once (while healthy)
 1. Keep a restore recipe under persistent storage (e.g. `/home/box/agent-data/infra/`): install script, VPN state directory, config, and a `detect` script that prints `OK:*` / `MISSING:*` tags.
@@ -17,6 +19,8 @@ Grok Bot computer updates can wipe installed software and running processes outs
 2. Back up current state, then run restore.
 3. Outcomes: restored → `fleet_status`; needs a new auth key → ask the operator via secure secret entry (never chat); needs a network-admin approval/signature → one-line ask to the operator.
 4. Report one line: `RESTORED` / `BLOCKED_ON secret` / `BLOCKED_ON approval`.
+
+*Overlay-specific steps are not in the Hermes docs. Follow your VPN vendor's docs and mark them UNVERIFIED here.*
 
 ## Never
 - Log or echo auth keys.

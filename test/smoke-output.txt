@@ -1,17 +1,26 @@
-initialize: {"name":"hermes-fleet","version":"0.1.0"}
-tools: fleet_health, fleet_status, ask, get_result, mailbox_send, mailbox_read
+tools: fleet_health, fleet_status, ask, get_result, hermes_docs, fleet_version, config_drift, inference_status, host_command, gateway_restart, update_plan, mailbox_send, mailbox_read
 
 ### fleet_health {}
 {
-  "checked_at": "2026-10-14T12:52:36.858Z",
+  "checked_at": "2026-10-14T15:17:23.154Z",
   "results": [
     {
-      "host": "mock-up",
+      "host": "mock-a",
       "ok": true,
       "http_status": 200,
-      "latency_ms": 84,
-      "mode": "http",
-      "version": "mock-0.0.1",
+      "latency_ms": 76,
+      "mode": "hermes-agent",
+      "version": null,
+      "status": "ok",
+      "verdict": "OK"
+    },
+    {
+      "host": "mock-b",
+      "ok": true,
+      "http_status": 200,
+      "latency_ms": 28,
+      "mode": "hermes-agent",
+      "version": null,
       "status": "ok",
       "verdict": "OK"
     },
@@ -27,8 +36,8 @@ tools: fleet_health, fleet_status, ask, get_result, mailbox_send, mailbox_read
 ### fleet_status {}
 {
   "verdict": "YELLOW",
-  "up": 1,
-  "total": 2,
+  "up": 2,
+  "total": 3,
   "down": [
     {
       "host": "mock-down",
@@ -36,56 +45,232 @@ tools: fleet_health, fleet_status, ask, get_result, mailbox_send, mailbox_read
     }
   ],
   "pending_runs": 0,
-  "summary": "YELLOW: 1/2 Hermes hosts healthy; 0 ask run(s) in flight"
+  "summary": "YELLOW: 2/3 Hermes hosts healthy; 0 ask run(s) in flight"
 }
 
-### ask {"host":"mock-up","prompt":"reply pong"}
+### fleet_version {}
 {
-  "run_id": "1b10621b-b717-4db5-9780-05305ae8bd09",
-  "host": "mock-up",
+  "drift": true,
+  "versions": [
+    "9.9.1",
+    "9.9.0"
+  ],
+  "hosts": [
+    {
+      "host": "mock-a",
+      "version": "9.9.1",
+      "source": "/health/detailed"
+    },
+    {
+      "host": "mock-b",
+      "version": "9.9.0",
+      "source": "/health/detailed"
+    },
+    {
+      "host": "mock-down",
+      "error": "ECONNREFUSED",
+      "version": null
+    }
+  ],
+  "note": "Version not exposed over HTTP for some hosts: run `hermes --version` there (host_command action=version) - see reference/cli-commands."
+}
+
+### config_drift {}
+{
+  "baseline": "fleet-majority",
+  "drift": true,
+  "hosts": [
+    {
+      "host": "mock-a",
+      "hash": "3cbf47ab7bc7",
+      "count": 3,
+      "missing": [],
+      "extra": []
+    },
+    {
+      "host": "mock-b",
+      "hash": "ef979d087456",
+      "count": 2,
+      "missing": [
+        "gamma-skill"
+      ],
+      "extra": []
+    },
+    {
+      "host": "mock-down",
+      "error": "ECONNREFUSED"
+    }
+  ]
+}
+
+### inference_status {"host":"mock-a"}
+{
+  "host": "mock-a",
+  "detailed": {
+    "status": "ok",
+    "version": "9.9.1",
+    "readiness": {
+      "checks": {
+        "model": "ok",
+        "disk": "ok"
+      }
+    }
+  },
+  "models": {
+    "object": "list",
+    "data": [
+      {
+        "id": "hermes-agent"
+      }
+    ]
+  },
+  "model_options": {
+    "http_status": 404
+  },
+  "quota": "Run `hermes usage --json` on the host (host_command action=usage) for rate-limit windows; `hermes fallback list` for the fallback chain. See reference/cli-commands."
+}
+
+### ask {"host":"mock-a","prompt":"reply pong"}
+{
+  "run_id": "12c95a92-5abd-4349-a21b-16113b442aaa",
+  "host": "mock-a",
   "state": "running",
+  "mode": "native-runs",
   "next": "Call get_result with this run_id; poll every 10-30s."
 }
 
-### get_result {"run_id":"1b10621b-b717-4db5-9780-05305ae8bd09"}
+### get_result (final)
 {
-  "run_id": "1b10621b-b717-4db5-9780-05305ae8bd09",
-  "host": "mock-up",
-  "state": "running",
-  "submitted_at": "2026-10-14T12:52:36.958Z"
-}
-
-### get_result {"run_id":"1b10621b-b717-4db5-9780-05305ae8bd09"}
-{
-  "run_id": "1b10621b-b717-4db5-9780-05305ae8bd09",
-  "host": "mock-up",
-  "state": "running",
-  "submitted_at": "2026-10-14T12:52:36.958Z"
-}
-
-### get_result {"run_id":"1b10621b-b717-4db5-9780-05305ae8bd09"}
-{
-  "run_id": "1b10621b-b717-4db5-9780-05305ae8bd09",
-  "host": "mock-up",
-  "state": "running",
-  "submitted_at": "2026-10-14T12:52:36.958Z"
-}
-
-### get_result {"run_id":"1b10621b-b717-4db5-9780-05305ae8bd09"}
-{
-  "run_id": "1b10621b-b717-4db5-9780-05305ae8bd09",
-  "host": "mock-up",
+  "run_id": "12c95a92-5abd-4349-a21b-16113b442aaa",
+  "host": "mock-a",
   "state": "done",
-  "submitted_at": "2026-10-14T12:52:36.958Z",
-  "latency_ms": 1511,
-  "result": "mock-hermes echo: reply pong",
-  "finished_at": "2026-10-14T12:52:38.470Z"
+  "submitted_at": "2026-10-14T15:17:23.276Z",
+  "mode": "native-runs",
+  "remote_run_id": "run_12uhgs4dok",
+  "result": "mock-hermes: reply pong",
+  "runtime": {
+    "provider": "mock",
+    "model": "mock-1"
+  },
+  "finished_at": "2026-10-14T15:17:24.498Z"
 }
+
+### hermes_docs {"query":"gateway restart"}
+{
+  "golden_rule": "Official Hermes docs consulted before acting. If the answer is not below, say 'not in official docs' and mark the step UNVERIFIED.",
+  "sources": [
+    "http://127.0.0.1:18650/docs/llms.txt"
+  ],
+  "matches": [
+    {
+      "url": "http://127.0.0.1:18650/docs/llms.txt",
+      "lines": [
+        "# Hermes Agent",
+        "- [CLI Commands](http://127.0.0.1:18650/docs/reference/cli-commands): commands incl. gateway restart",
+        "- [Updating](http://127.0.0.1:18650/docs/getting-started/updating): hermes update --plan --check --backup"
+      ]
+    }
+  ],
+  "suggested_pages": [
+    "http://127.0.0.1:18650/docs/reference/cli-commands",
+    "http://127.0.0.1:18650/docs/getting-started/updating"
+  ],
+  "next": "Fetch a suggested page with hermes_docs {page, query} for the exact command/flags before acting."
+}
+
+### gateway_restart {"host":"mock-a"}
+{
+  "dry_run": true,
+  "host": "mock-a",
+  "command": "hermes gateway restart",
+  "pre_health": {
+    "host": "mock-a",
+    "ok": true,
+    "http_status": 200,
+    "latency_ms": 2,
+    "mode": "hermes-agent",
+    "version": null,
+    "status": "ok",
+    "verdict": "OK"
+  },
+  "docs": {
+    "doc_url": "http://127.0.0.1:18650/docs/reference/cli-commands",
+    "excerpt": [
+      "CLI",
+      "restart",
+      "Restart the service.",
+      "status",
+      "Show service status.",
+      ""
+    ]
+  },
+  "checks": [
+    "Confirm the operator asked for a restart (in-flight runs end 'interrupted').",
+    "Desktop-primary host with no supervised gateway? do NOT restart/install a gateway there.",
+    "After: fleet_health host=<host> must be OK; host_command action=gateway_status."
+  ],
+  "to_execute": "re-call with confirm=true"
+}
+
+### update_plan {"canary":"mock-a"}
+{
+  "dry_run": true,
+  "canary": "mock-a",
+  "health": [
+    {
+      "host": "mock-a",
+      "verdict": "OK"
+    },
+    {
+      "host": "mock-b",
+      "verdict": "OK"
+    },
+    {
+      "host": "mock-down",
+      "verdict": "FAIL"
+    }
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "what": "Golden rule: read getting-started/updating (hermes_docs) - flags change between releases."
+    },
+    {
+      "step": 1,
+      "what": "fleet_status must be GREEN (or known-RED hosts excluded explicitly)."
+    },
+    {
+      "step": 2,
+      "what": "Canary mock-a: host_command action=update_plan (hermes update --plan) and action=update_check (hermes update --check)."
+    },
+    {
+      "step": 3,
+      "what": "Canary mock-a: update_plan host=mock-a confirm=true (runs hermes update --backup; Hermes snapshots state and auto-rolls back on syntax failure)."
+    },
+    {
+      "step": 4,
+      "what": "Canary mock-a: fleet_version + fleet_health + host_command action=doctor; one tiny ask. Soak 15-60 min."
+    },
+    {
+      "step": 5,
+      "what": "Roll remaining hosts one at a time, same checks after each; stop on first failure.",
+      "hosts": [
+        "mock-b",
+        "mock-down"
+      ]
+    },
+    {
+      "step": 6,
+      "what": "fleet_version drift must be false at the end."
+    },
+    {
+      "step": "rollback",
+      "what": "Read the updating doc for pin/rollback options for your install kind (source checkout vs package vs desktop). Restore from the pre-update backup if needed.
 
 ### mailbox_send {"to":"hermes-alpha","subject":"test","body":"fallback hello"}
 {
   "delivered": true,
-  "id": "47363616-412e-46cc-ba96-76386901f014",
+  "id": "202f4b67-3ad5-42a9-8f5c-11e92e3b2d05",
   "to": "hermes-alpha",
   "via": "dir"
 }
@@ -96,14 +281,115 @@ tools: fleet_health, fleet_status, ask, get_result, mailbox_send, mailbox_read
   "count": 1,
   "messages": [
     {
-      "id": "47363616-412e-46cc-ba96-76386901f014",
+      "id": "202f4b67-3ad5-42a9-8f5c-11e92e3b2d05",
       "to": "hermes-alpha",
       "from": "grok-bot",
       "subject": "test",
       "body": "fallback hello",
-      "sent_at": "2026-10-14T12:52:38.972Z"
+      "sent_at": "2026-10-14T15:17:24.526Z"
     }
   ]
 }
 
-SMOKE PASS
+### gateway_restart {"host":"mock-a","confirm":true}
+{
+  "dry_run": false,
+  "host": "mock-a",
+  "command": "hermes gateway restart",
+  "pre_health": {
+    "host": "mock-a",
+    "ok": true,
+    "http_status": 200,
+    "latency_ms": 64,
+    "mode": "hermes-agent",
+    "version": null,
+    "status": "ok",
+    "verdict": "OK"
+  },
+  "docs": {
+    "doc_url": "http://127.0.0.1:18650/docs/reference/cli-commands",
+    "excerpt": [
+      "CLI",
+      "restart",
+      "Restart the service.",
+      "status",
+      "Show service status.",
+      ""
+    ]
+  },
+  "checks": [
+    "Confirm the operator asked for a restart (in-flight runs end 'interrupted').",
+    "Desktop-primary host with no supervised gateway? do NOT restart/install a gateway there.",
+    "After: fleet_health host=<host> must be OK; host_command action=gateway_status."
+  ],
+  "result": {
+    "adapter": "ssh",
+    "command": "hermes gateway restart",
+    "output": "FAKE-SSH would run: bash -lc 'hermes gateway restart'\n"
+  },
+  "post_health": {
+    "host": "mock-a",
+    "ok": true,
+    "http_status": 200,
+    "latency_ms": 4,
+    "mode": "hermes-agent",
+    "version": null,
+    "status": "ok",
+    "verdict": "OK"
+  }
+}
+
+### host_command {"host":"mock-b","action":"version"}
+{
+  "adapter": "ssh",
+  "command": "hermes --version",
+  "output": "FAKE-SSH would run: bash -lc 'hermes --version'\n"
+}
+
+### update_plan {"host":"mock-a","confirm":true}
+{
+  "dry_run": false,
+  "host": "mock-a",
+  "docs": {
+    "doc_url": "http://127.0.0.1:18650/docs/getting-started/updating",
+    "excerpt": [
+      "hermes update --plan is read-only.",
+      "hermes update --check previews.",
+      "hermes update --backup takes a full backup.",
+      ""
+    ]
+  },
+  "result": {
+    "adapter": "ssh",
+    "command": "hermes update --backup",
+    "output": "FAKE-SSH would run: bash -lc 'hermes update --backup'\n"
+  }
+}
+
+=== CHECKS
+PASS  server reports v2.0.0
+PASS  13 tools listed
+PASS  LESSON fail-loud: unreachable host is FAIL, not skipped
+PASS  fleet_status YELLOW with one host down
+PASS  fleet_version detects drift 9.9.1 vs 9.9.0
+PASS  config_drift flags host missing gamma-skill
+PASS  inference_status reads /v1/models
+PASS  LESSON explicit host required for ask
+PASS  ask uses native /v1/runs
+PASS  LESSON async ask completes via polling
+PASS  hermes_docs finds doc lines
+PASS  GOLDEN RULE: missing topic reported NOT IN OFFICIAL DOCS
+PASS  hermes_docs refuses non-official origins
+PASS  SAFETY gateway_restart is dry-run by default
+PASS  GOLDEN RULE dry-run carries doc link + excerpt
+PASS  SAFETY confirm with exec adapter disabled refuses
+PASS  update_plan dry-run puts canary first, docs attached
+PASS  SAFETY update confirm requires explicit host
+PASS  SAFETY host_command rejects non-allowlisted
+PASS  mailbox round-trip
+PASS  LESSON no secrets in tool output
+PASS  confirm=true executes via adapter (fake ssh)
+PASS  host_command read-only via adapter
+PASS  update confirm runs only that host
+
+SMOKE PASS (24/24)
