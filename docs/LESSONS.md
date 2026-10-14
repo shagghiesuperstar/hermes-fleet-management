@@ -2,6 +2,14 @@
 
 Every lesson cites the official doc it was checked against, or is marked UNVERIFIED. Format: see `skills/compound-learnings/SKILL.md`. `test/skills.test.mjs` enforces the citation.
 
+### 2026-10-14: /health "ok" hides a draining gateway (live test on 0.22.0)
+- Symptom: fleet_status said GREEN while one host's gateway was `draining` and another's readiness was `degraded`; config_drift claimed drift because every host's `GET /v1/skills` returned HTTP 500 ("Failed to enumerate skills") even though `/v1/capabilities` advertises `skills_api: true`.
+- Root cause: health only read `/health` (liveness). Readiness and `gateway_state` live in `/health/detailed`. Drift treated "no data" as "drift".
+- Fix / rule: fleet_health also reads `/health/detailed`; non-ok readiness or non-running gateway is WARN and makes fleet_status YELLOW. config_drift reports `drift: null` (UNKNOWN) with the server's error message when no host returns a skill list.
+- Checked against: https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server (the /v1/skills 500 itself is UNVERIFIED as a Hermes-side bug; not in official docs)
+- Encoded in: server healthOne, fleet_status, config_drift
+- Regression: test/smoke.mjs "LESSON 0.22.0: draining gateway / degraded readiness is WARN, not OK"
+
 ### 2026-10-14: Soft "prefer HTTP, else SSH" rules leave a back door
 - Symptom: bots claimed HTTP but wandered into SSH asks. Health looked flaky, then "magically" recovered.
 - Root cause: stale instructions still advertised an SSH ask path next to the live HTTP connector.

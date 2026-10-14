@@ -1,3 +1,8 @@
+## 2.0.1
+- fleet_health/fleet_status read /health/detailed; WARN/YELLOW on draining or degraded hosts
+- config_drift returns UNKNOWN (drift null) with server error when no host returns skills
+- hermes_docs decodes numeric HTML entities
+
 # Changelog
 
 ## [Unreleased]

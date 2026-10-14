@@ -52,12 +52,25 @@ const auth = (h) => (h.apiKey ? { Authorization: `Bearer ${h.apiKey}` } : {});
 
 async function healthOne(h) {
   try {
-    const r = await timedFetch(`${h.url}/health`, { headers: auth(h) });
+    // /health is the liveness probe; /health/detailed (0.22.0+) adds readiness + gateway_state.
+    // A host can answer /health "ok" while its gateway is draining or readiness is degraded: surface that as WARN.
+    const [r, d] = await Promise.all([
+      timedFetch(`${h.url}/health`, { headers: auth(h) }),
+      timedFetch(`${h.url}/health/detailed`, { headers: auth(h) }).catch(() => null),
+    ]);
     const b = typeof r.body === "object" && r.body ? r.body : {};
+    const db = d?.ok && typeof d.body === "object" && d.body ? d.body : {};
+    const readiness = db.readiness?.status ?? null;
+    const gateway_state = db.gateway_state ?? db.readiness?.checks?.gateway?.state ?? null;
+    const degraded = db.readiness?.checks ? Object.entries(db.readiness.checks).filter(([, c]) => c && typeof c === "object" && c.status && c.status !== "ok").map(([k, c]) => `${k}:${c.status}`) : [];
+    const warnings = [];
+    if (readiness && readiness !== "ok") warnings.push(`readiness ${readiness}${degraded.length ? ` (${degraded.join(", ")})` : ""}`);
+    if (gateway_state && gateway_state !== "running") warnings.push(`gateway ${gateway_state}`);
     return {
       host: h.name, ok: r.ok, http_status: r.status, latency_ms: r.latency_ms,
-      mode: b.mode ?? b.platform ?? null, version: b.version ?? null, status: b.status ?? null,
-      verdict: r.ok ? "OK" : "FAIL",
+      mode: b.mode ?? b.platform ?? null, version: b.version ?? db.version ?? null, status: b.status ?? null,
+      ...(readiness ? { readiness } : {}), ...(gateway_state ? { gateway_state } : {}), ...(warnings.length ? { warnings } : {}),
+      verdict: !r.ok ? "FAIL" : warnings.length ? "WARN" : "OK",
     };
   } catch (e) {
     return { host: h.name, ok: false, verdict: "FAIL", error: e.name === "AbortError" ? `timeout after ${HEALTH_TIMEOUT}ms` : String(e.cause?.code || e.message) };
@@ -132,7 +145,7 @@ async function docText(url) {
   let t = await fetchRaw(url);
   if (/<html/i.test(t)) {
     const m = t.match(/<article[\s\S]*?<\/article>/i); if (m) t = m[0];
-    t = t.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, "").replace(/<(br|\/p|\/li|\/tr|\/h\d|\/pre|\/div)[^>]*>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\n\s*\n+/g, "\n");
+    t = t.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, "").replace(/<(br|\/p|\/li|\/tr|\/h\d|\/pre|\/div)[^>]*>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x([0-9a-f]+);/gi, (_, x) => String.fromCodePoint(parseInt(x, 16))).replace(/&#(\d+);/g, (_, x) => String.fromCodePoint(Number(x))).replace(/&nbsp;/g, " ").replace(/\n\s*\n+/g, "\n");
   }
   docCache.set(url, t); return t;
 }
@@ -274,10 +287,11 @@ const tools = {
     run: async () => {
       const hs = loadHosts(); const res = await Promise.all(hs.map(healthOne));
       const up = res.filter((r) => r.ok).length;
-      const verdict = !hs.length ? "UNCONFIGURED" : up === hs.length ? "GREEN" : up === 0 ? "RED" : "YELLOW";
+      const warn = res.filter((r) => r.verdict === "WARN").map((r) => ({ host: r.host, warnings: r.warnings }));
+      const verdict = !hs.length ? "UNCONFIGURED" : up === 0 ? "RED" : up < hs.length || warn.length ? "YELLOW" : "GREEN";
       const pending = [...runs.values()].filter((r) => r.state === "running").length;
-      return { verdict, up, total: hs.length, down: res.filter((r) => !r.ok).map((r) => ({ host: r.host, error: r.error || `HTTP ${r.http_status}` })), pending_runs: pending,
-        summary: `${verdict}: ${up}/${hs.length} Hermes hosts healthy; ${pending} ask run(s) in flight` };
+      return { verdict, up, total: hs.length, down: res.filter((r) => !r.ok).map((r) => ({ host: r.host, error: r.error || `HTTP ${r.http_status}` })), warn, pending_runs: pending,
+        summary: `${verdict}: ${up}/${hs.length} Hermes hosts up${warn.length ? `, ${warn.length} with warnings` : ""}; ${pending} ask run(s) in flight` };
     },
   },
   ask: {
@@ -323,7 +337,7 @@ const tools = {
       const rows = await Promise.all(hs.map(async (h) => {
         try {
           const r = await timedFetch(`${h.url}/v1/skills`, { headers: auth(h) });
-          if (!r.ok) return { host: h.name, error: `HTTP ${r.status}` };
+          if (!r.ok) return { host: h.name, error: `HTTP ${r.status}${r.body?.error?.message ? `: ${r.body.error.message}` : typeof r.body === "string" && r.body ? `: ${r.body.slice(0, 200)}` : ""}` };
           const list = Array.isArray(r.body) ? r.body : r.body?.data || r.body?.skills || [];
           const names = list.map((s) => (typeof s === "string" ? s : `${s.name}${s.version ? "@" + s.version : ""}`)).sort();
           return { host: h.name, count: names.length, hash: createHash("sha256").update(names.join("\n")).digest("hex").slice(0, 12), names };
@@ -335,6 +349,7 @@ const tools = {
       if (!declared && ok.length) { const counts = {}; ok.forEach((r) => (counts[r.hash] = (counts[r.hash] || 0) + 1)); const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0]; declared = ok.find((r) => r.hash === top).names; }
       const base = declared ? declared.map((n) => n.split("@")[0]) : [];
       const report = rows.map((r) => r.names ? { host: r.host, hash: r.hash, count: r.count, missing: (declared || []).filter((n) => !r.names.includes(n)), extra: r.names.filter((n) => !(declared || []).includes(n)) } : r);
+      if (!ok.length && !env.HERMES_FLEET_MANIFEST) return { baseline: "none", drift: null, verdict: "UNKNOWN: no host returned a skill list, so drift cannot be computed", hosts: report };
       return { baseline: env.HERMES_FLEET_MANIFEST ? "declared-manifest" : "fleet-majority", drift: report.some((r) => r.error || r.missing?.length || r.extra?.length), hosts: report };
     },
   },

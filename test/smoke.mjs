@@ -50,5 +50,14 @@ const live = await B.call("gateway_restart", { host: "mock-a", confirm: true });
 const ver = await B.call("host_command", { host: "mock-b", action: "version" }); check("host_command read-only via adapter", String(ver.output).includes("hermes --version"));
 const upLive = await B.call("update_plan", { host: "mock-a", confirm: true }); check("update confirm runs only that host", upLive.host === "mock-a" && String(upLive.result.output).includes("hermes update --backup"));
 B.srv.kill();
+// 0.22.0 regressions (live test 2026-10-14): draining/degraded must not read GREEN; /v1/skills 500 must not claim drift
+const C = start({ HERMES_HOSTS: JSON.stringify([{ name: "mock-022", url: "http://127.0.0.1:18644" }]) });
+const ch = await C.call("fleet_health"); const c0 = ch.results[0];
+check("LESSON 0.22.0: draining gateway / degraded readiness is WARN, not OK", c0.verdict === "WARN" && c0.gateway_state === "draining" && c0.warnings.some((w) => w.includes("disk:degraded")));
+const cs = await C.call("fleet_status"); check("fleet_status YELLOW when a host is WARN", cs.verdict === "YELLOW" && cs.warn.length === 1);
+const cc = await C.call("config_drift"); check("config_drift: skills 500 -> drift unknown + server message", cc.drift === null && cc.hosts[0].error.includes("Failed to enumerate skills"));
+C.srv.kill();
+const docEnt = await (async () => { const D = start({ HERMES_DOCS_BASE: "http://127.0.0.1:18650/docs/" }); const x = await D.call("hermes_docs", { page: "entities", query: "" }, true); D.srv.kill(); return x; })();
+check("hermes_docs decodes numeric HTML entities", JSON.stringify(docEnt).includes("doesn't") && !JSON.stringify(docEnt).includes("&#x27;"));
 console.log("\n=== CHECKS"); for (const [n, ok] of results) console.log(`${ok ? "PASS" : "FAIL"}  ${n}`);
 const failed = results.filter(([, ok]) => !ok).length; console.log(`\nSMOKE ${failed ? "FAIL" : "PASS"} (${results.length - failed}/${results.length})`); process.exit(failed ? 1 : 0);
