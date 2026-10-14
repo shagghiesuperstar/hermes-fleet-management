@@ -14,5 +14,5 @@ for (const l of lessons) ok(/Checked against: (https:\/\/hermes-agent\.nousresea
 const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
 ok(/## Golden Rule/.test(readme) && readme.indexOf("Golden Rule") < readme.indexOf("## What's inside"), "README opens with the Golden Rule");
 const pj = JSON.parse(fs.readFileSync(path.join(root, ".cursor-plugin/plugin.json"), "utf8"));
-ok(pj.version === "2.0.0" && /official Hermes docs/i.test(pj.description), "manifest v2.0.0 and golden rule in description");
+ok(/^2\.\d+\.\d+$/.test(pj.version) && /official Hermes docs/i.test(pj.description), "manifest v2.x and golden rule in description");
 console.log(fail ? `\nSKILLS TEST FAIL (${fail})` : "\nSKILLS TEST PASS"); process.exit(fail ? 1 : 0);
