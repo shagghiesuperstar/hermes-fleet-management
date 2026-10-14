@@ -1,0 +1,109 @@
+initialize: {"name":"hermes-fleet","version":"0.1.0"}
+tools: fleet_health, fleet_status, ask, get_result, mailbox_send, mailbox_read
+
+### fleet_health {}
+{
+  "checked_at": "2026-10-14T12:52:36.858Z",
+  "results": [
+    {
+      "host": "mock-up",
+      "ok": true,
+      "http_status": 200,
+      "latency_ms": 84,
+      "mode": "http",
+      "version": "mock-0.0.1",
+      "status": "ok",
+      "verdict": "OK"
+    },
+    {
+      "host": "mock-down",
+      "ok": false,
+      "verdict": "FAIL",
+      "error": "ECONNREFUSED"
+    }
+  ]
+}
+
+### fleet_status {}
+{
+  "verdict": "YELLOW",
+  "up": 1,
+  "total": 2,
+  "down": [
+    {
+      "host": "mock-down",
+      "error": "ECONNREFUSED"
+    }
+  ],
+  "pending_runs": 0,
+  "summary": "YELLOW: 1/2 Hermes hosts healthy; 0 ask run(s) in flight"
+}
+
+### ask {"host":"mock-up","prompt":"reply pong"}
+{
+  "run_id": "1b10621b-b717-4db5-9780-05305ae8bd09",
+  "host": "mock-up",
+  "state": "running",
+  "next": "Call get_result with this run_id; poll every 10-30s."
+}
+
+### get_result {"run_id":"1b10621b-b717-4db5-9780-05305ae8bd09"}
+{
+  "run_id": "1b10621b-b717-4db5-9780-05305ae8bd09",
+  "host": "mock-up",
+  "state": "running",
+  "submitted_at": "2026-10-14T12:52:36.958Z"
+}
+
+### get_result {"run_id":"1b10621b-b717-4db5-9780-05305ae8bd09"}
+{
+  "run_id": "1b10621b-b717-4db5-9780-05305ae8bd09",
+  "host": "mock-up",
+  "state": "running",
+  "submitted_at": "2026-10-14T12:52:36.958Z"
+}
+
+### get_result {"run_id":"1b10621b-b717-4db5-9780-05305ae8bd09"}
+{
+  "run_id": "1b10621b-b717-4db5-9780-05305ae8bd09",
+  "host": "mock-up",
+  "state": "running",
+  "submitted_at": "2026-10-14T12:52:36.958Z"
+}
+
+### get_result {"run_id":"1b10621b-b717-4db5-9780-05305ae8bd09"}
+{
+  "run_id": "1b10621b-b717-4db5-9780-05305ae8bd09",
+  "host": "mock-up",
+  "state": "done",
+  "submitted_at": "2026-10-14T12:52:36.958Z",
+  "latency_ms": 1511,
+  "result": "mock-hermes echo: reply pong",
+  "finished_at": "2026-10-14T12:52:38.470Z"
+}
+
+### mailbox_send {"to":"hermes-alpha","subject":"test","body":"fallback hello"}
+{
+  "delivered": true,
+  "id": "47363616-412e-46cc-ba96-76386901f014",
+  "to": "hermes-alpha",
+  "via": "dir"
+}
+
+### mailbox_read {"box":"hermes-alpha","archive":true}
+{
+  "box": "hermes-alpha",
+  "count": 1,
+  "messages": [
+    {
+      "id": "47363616-412e-46cc-ba96-76386901f014",
+      "to": "hermes-alpha",
+      "from": "grok-bot",
+      "subject": "test",
+      "body": "fallback hello",
+      "sent_at": "2026-10-14T12:52:38.972Z"
+    }
+  ]
+}
+
+SMOKE PASS

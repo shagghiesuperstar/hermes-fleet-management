@@ -1,0 +1,16 @@
+{
+  "name": "hermes-fleet-management",
+  "displayName": "Hermes Fleet Management",
+  "version": "0.1.0",
+  "description": "Manage a fleet of Nous Research Hermes agents from Grok Bot: fail-loud fleet health, async ask over the Hermes native HTTP API (:8642) with run polling, and a file-mailbox fallback channel.",
+  "author": { "name": "@pixelrainbownft" },
+  "homepage": "https://x.com/pixelrainbownft",
+  "repository": "https://github.com/shagghiesuperstar/hermes-fleet-management",
+  "license": "MIT",
+  "logo": "assets/logo.svg",
+  "keywords": ["hermes", "hermes-agent", "nous-research", "fleet", "mcp", "agents", "health-check", "bridge"],
+  "category": "developer-tools",
+  "tags": ["agents", "fleet", "ops", "mcp"],
+  "skills": "./skills/",
+  "mcpServers": "./mcp.json"
+}

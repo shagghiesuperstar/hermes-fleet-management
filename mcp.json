@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "hermes-fleet": {
+      "command": "node",
+      "args": ["${CURSOR_PLUGIN_ROOT}/server/index.mjs"],
+      "env": {
+        "HERMES_HOSTS": "${HERMES_HOSTS}",
+        "HERMES_API_KEY": "${HERMES_API_KEY}",
+        "HERMES_MAILBOX_DIR": "${HERMES_MAILBOX_DIR}",
+        "HERMES_MAILBOX_SELF": "${HERMES_MAILBOX_SELF}"
+      }
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "hermes-fleet": {
+      "url": "http://YOUR-PRIVATE-HOST:8787/mcp",
+      "headers": { "Authorization": "Bearer ${MCP_AUTH_TOKEN}" }
+    }
+  }
+}
