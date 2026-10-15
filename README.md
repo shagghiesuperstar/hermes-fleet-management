@@ -122,6 +122,34 @@ node test/smoke.mjs              # 24 end-to-end checks incl. dry-run vs confirm
 node test/skills.test.mjs        # every skill has step 0 Golden Rule; every lesson cites a doc or UNVERIFIED
 ```
 
+## Companion Grok Bot template: Hermes Fleet Ops
+A docs-first ops desk for any Nous Research Hermes Agent fleet. It pairs with this plugin: fail-loud health, version and skill drift, and safe (dry-run first) restarts and updates.
+
+**Template link:** coming soon (not published yet). By [@pixelrainbownft](https://x.com/pixelrainbownft) · [pixelrainbow.ai](https://pixelrainbow.ai).
+
+### First-run getting-started
+Asks one question at a time, then wires the plugin:
+
+1. Is the Hermes Fleet Management plugin installed yet?
+2. Short names for each Hermes host (e.g. `hermes-a`, `hermes-b`).
+3. Base URL per host (Hermes HTTP API on `:8642` over the tailnet, e.g. `http://hermes-a.tailnet-name.ts.net:8642`).
+4. One plugin secret per host key (matches that host's `API_SERVER_KEY`; never asked or stored in chat).
+5. Remote exec opt-in (`HERMES_EXEC_ADAPTER` stays `none` unless you ask).
+6. What to call you, and where to send failure alerts.
+
+Then it builds `HERMES_HOSTS` (names and URLs only), runs `fleet_health` and `fleet_status`, and offers the daily and weekly routines.
+
+### Daily health and weekly update
+- **Daily:** `fleet_health` → `fleet_status` → `fleet_version` → `config_drift`. Read-only. FAIL LOUD on unreachable hosts, auth errors, RED/YELLOW, version mismatch, or skill drift (including UNKNOWN). One short all-clear when everything is GREEN.
+- **Weekly:** update dry-run with a canary host first (`update_plan`), then roll only after a healthy soak — mutations stay dry-run unless `confirm=true` on one named host.
+
+### Behavior
+- **Golden Rule:** read official Hermes docs (`hermes_docs`) before acting; label gaps "not in official docs" / UNVERIFIED.
+- **HTTP `:8642` over Tailscale** (or another private network) with per-host bearer keys. Never expose the API on the public internet.
+- **Exec off by default**; mutating tools dry-run unless `confirm=true`.
+- **Fail loud** — unreachable or 401 is FAIL, not skipped green.
+- **SSH is break-glass only:** host repair over Tailscale after HTTP proves a host unreachable. Never used to talk to agents.
+
 ## Credit
 The bridge design and fleet lessons come from [@pixelrainbownft](https://x.com/pixelrainbownft). MIT licensed.
 
