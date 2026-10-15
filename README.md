@@ -99,3 +99,6 @@ node test/skills.test.mjs        # every skill has step 0 Golden Rule; every les
 
 ## Credit
 The bridge design and fleet lessons come from [@pixelrainbownft](https://x.com/pixelrainbownft). MIT licensed.
+
+## More from pixelrainbow
+Built by [@pixelrainbownft](https://x.com/pixelrainbownft). Visit https://pixelrainbow.ai for 180+ Hermes skills and 9 complementary Grok Bot templates.
