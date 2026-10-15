@@ -55,7 +55,7 @@ A Grok Bot plugin for running **any** fleet of [Nous Research Hermes Agent](http
 | Learning loop | compound-learnings | tests |
 
 ## Safety model
-- **Private network only.** Keep Hermes `:8642` and the HTTP MCP endpoint on a VPN, mesh network or LAN. The API server gives full access to Hermes' toolset, including the terminal, so `API_SERVER_KEY` is required on every deployment.
+- **Private network only.** Keep Hermes `:8642` and the HTTP MCP endpoint off the public internet (see [Recommended architecture](#recommended-architecture)). The API server gives full access to Hermes' toolset, including the terminal, so `API_SERVER_KEY` is required on every deployment ([official API server docs](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server)).
 - **Bearer auth everywhere.** Keys come from env or a secrets manager. They are never hardcoded, logged or returned (a test checks that no key appears in tool output).
 - **Explicit host.** `ask`, `inference_status`, `host_command`, `gateway_restart` and `update_plan confirm=true` all require a host.
 - **Dry-run by default.** Mutating tools return the exact command, pre-health and doc evidence. They execute only with `confirm=true`.
@@ -66,6 +66,31 @@ A Grok Bot plugin for running **any** fleet of [Nous Research Hermes Agent](http
 - **Allowlist.** Only the read-only commands listed in `host_command` plus two mutations (`hermes gateway restart`, `hermes update --backup`). Everything else is the operator's job, on purpose.
 - **Canary gate.** `update_plan` refuses to roll a non-canary host while the canary is unhealthy.
 - **Official docs only.** `hermes_docs` refuses pages outside the configured official origins.
+
+## Recommended architecture
+**Preferred network: [Tailscale](https://tailscale.com).** Each Hermes host runs the official Hermes HTTP API server on port `8642`, bound to that host's tailnet address or MagicDNS name so it is never exposed on the public internet. This plugin talks to each host over HTTP/HTTPS on the tailnet, with a per-host bearer key (`API_SERVER_KEY` / `HERMES_API_KEY`). SSH relays are **not** recommended for talking to agents (asks use the HTTP API only). Use Tailscale ACLs/tags to limit who can reach `:8642`.
+
+Other private networks work too (WireGuard, a LAN, a VPN): the plugin only needs a reachable base URL per host.
+
+Example `HERMES_HOSTS` entries (placeholders only):
+
+```json
+[
+  {"name":"hermes-a","url":"http://hermes-a.tailnet-name.ts.net:8642","api_key_env":"HERMES_A_API_KEY"},
+  {"name":"hermes-b","url":"http://hermes-b.tailnet-name.ts.net:8642","api_key_env":"HERMES_B_API_KEY"}
+]
+```
+
+**Golden Rule — official Hermes docs for bind/host settings.** Before changing API server bind or auth, read [user-guide/features/api-server](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server) (also [environment variables](https://hermes-agent.nousresearch.com/docs/reference/environment-variables)):
+
+| Setting | Official default / notes |
+|---|---|
+| `API_SERVER_ENABLED` | `false` — must be `true` to serve the HTTP API |
+| `API_SERVER_PORT` | `8642` |
+| `API_SERVER_HOST` | `127.0.0.1` (localhost only by default). Set to the private/tailnet interface (or `0.0.0.0` only inside a trusted network) so fleet peers can reach it |
+| `API_SERVER_KEY` | required bearer token on every deployment, including loopback |
+
+Tailscale MagicDNS names, ACLs/tags, and “prefer Tailscale over SSH relays for agent talk” are **not in official Hermes docs** (UNVERIFIED / operator policy). Hermes documents the API server bind and auth; how you overlay the private network is yours.
 
 ## Install
 1. Install from the marketplace, or clone this repo.
@@ -81,7 +106,7 @@ A Grok Bot plugin for running **any** fleet of [Nous Research Hermes Agent](http
 | `HERMES_MAILBOX_DIR` / `HERMES_MAILBOX_SSH` / `HERMES_MAILBOX_SELF` | optional | Fallback mailbox |
 | `HERMES_MODEL`, `HERMES_HEALTH_TIMEOUT_MS`, `HERMES_ASK_TIMEOUT_MS`, `HERMES_RUN_DIR` | optional | Tuning |
 
-3. On each Hermes host, read `user-guide/features/api-server`, then set `API_SERVER_ENABLED=true`, a strong `API_SERVER_KEY`, and `API_SERVER_HOST` bound to a private interface. Restart the gateway.
+3. On each Hermes host, read the official [API server](https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server) docs, then set `API_SERVER_ENABLED=true`, a strong `API_SERVER_KEY`, and `API_SERVER_HOST` to the host's private/tailnet address (default is `127.0.0.1` — localhost only). Restart the gateway. See [Recommended architecture](#recommended-architecture).
 4. Smoke test: `fleet_status` → `ask host=<h> prompt="reply pong"` → `get_result` → `fleet_version` → `config_drift`.
 
 ### Remote (HTTP) mode
