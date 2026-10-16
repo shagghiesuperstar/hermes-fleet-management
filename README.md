@@ -126,6 +126,7 @@ node test/skills.test.mjs        # every skill has step 0 Golden Rule; every les
 A docs-first ops desk for any Nous Research Hermes Agent fleet. It pairs with this plugin: fail-loud health, version and skill drift, and safe (dry-run first) restarts and updates.
 
 **Template link:** coming soon (not published yet). By [@pixelrainbownft](https://x.com/pixelrainbownft) · [pixelrainbow.ai](https://pixelrainbow.ai).
+The companion files are in [grokbot-template/](grokbot-template/).
 
 ### First-run getting-started
 Asks one question at a time, then wires the plugin:
